@@ -20,7 +20,7 @@ const createJWT = steamId =>
     }
   );
 
-const withDataSource = dataSource  => {
+const withDataSource = dataSource => {
   const app = express();
 
   passport.serializeUser((user, done) => {
@@ -44,7 +44,6 @@ const withDataSource = dataSource  => {
     )
   );
 
-
   app.use(passport.initialize());
 
   app.get(
@@ -54,14 +53,14 @@ const withDataSource = dataSource  => {
     }),
     (req, res) => {
       if (req.user) {
-        console.log('get steam/return',req.user);
-        const { steamid, personaname, avatar } = req.user._json;
+        console.log("get steam/return", req.user);
+        const { steamid, personaname, avatarmedium } = req.user._json;
         if (steamid) {
           dataSource[steamid] = {
             ...dataSource[steamid],
             steamid,
             personaname,
-            avatar
+            avatar: avatarmedium
           };
           res.redirect(
             "http://localhost:3000/login_success?" +
@@ -78,7 +77,7 @@ const withDataSource = dataSource  => {
   });
 
   app.get("/user", authorizeMiddleware(dataSource), (req, res) => {
-    console.log('verified user', req.user)
+    console.log("verified user", req.user);
     res.status(200).json(req.user);
   });
 
@@ -90,19 +89,23 @@ const authorizeMiddleware = dataSource => (req, res, next) => {
     !req.headers.authorization ||
     req.headers.authorization.indexOf("Bearer ") === -1
   ) {
-    return res.status(401).send( "Missing Authorization Header" );
+    return res.status(401).send("Missing Authorization Header");
   }
   const token = req.headers.authorization.split(" ")[1];
   const authorizedUser = jwt.verify(token, keys.public, {
     algorithms: ["RS256"]
-  })
+  });
   console.log("verified token: ", JSON.stringify(authorizedUser));
-  if (authorizedUser && authorizedUser.user && dataSource[authorizedUser.user.steamId]){ 
-    req.user = dataSource[authorizedUser.user.steamId]
-  } else{
-    return res.status(401).send( "Unauthorized");
+  if (
+    authorizedUser &&
+    authorizedUser.user &&
+    dataSource[authorizedUser.user.steamId]
+  ) {
+    req.user = dataSource[authorizedUser.user.steamId];
+  } else {
+    return res.status(401).send("Unauthorized");
   }
-    
+
   next();
 };
 
