@@ -77,7 +77,6 @@ const withDataSource = dataSource => {
   });
 
   app.get("/user", authorizeMiddleware(dataSource), (req, res) => {
-    console.log("verified user", req.user);
     res.status(200).json(req.user);
   });
 
@@ -95,13 +94,13 @@ const authorizeMiddleware = dataSource => (req, res, next) => {
   const authorizedUser = jwt.verify(token, keys.public, {
     algorithms: ["RS256"]
   });
-  console.log("verified token: ", JSON.stringify(authorizedUser));
   if (
     authorizedUser &&
     authorizedUser.user &&
     dataSource[authorizedUser.user.steamId]
   ) {
-    req.user = dataSource[authorizedUser.user.steamId];
+    const {steamid, personaname, avatar} = dataSource[authorizedUser.user.steamId]; 
+    req.user = {steamid, personaname, avatar}
   } else {
     return res.status(401).send("Unauthorized");
   }
